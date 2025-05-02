@@ -73,10 +73,11 @@ On hitting GET `/prices/`, the response looks like:
 
 ## Assumptions & Models Used
 
-- The market operates on a simple **limit order book** model.
+- The market operates on a simple **order book** model.
+- **Best Bid**: The Best Bid is the highest price at which there is an outstanding buy order. This is the maximum price from all active buy orders in the order book.
+- **Best Ask**: The Best Ask is the lowest price at which there is an outstanding sell order. This is the minimum price from all active sell orders in the order book.
 - **Mid price** is calculated as the average of Best Bid and Best Ask.
-- **Weighted average price** is calculated from all matched buy/sell orders.
-- All prices are stored in **integer format** (e.g., 10000 means ₹100.00).
+- **Weighted Average Price**: The Weighted Average Price is calculated from all matched buy and sell orders, considering the volume of each order.
 ---
 
 ## 📁 File Structure
