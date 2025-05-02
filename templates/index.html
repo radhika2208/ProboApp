@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Probo Price Model</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f7fa;
+            color: #333;
+        }
+
+        header {
+            background-color: #2196F3;
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-size: 24px;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            font-size: 28px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        input[type="number"], select, button {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            font-size: 16px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+
+        button {
+            background-color: #2196F3;
+            color: white;
+            cursor: pointer;
+            border: none;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #1976D2;
+        }
+
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .metric {
+            background-color: #f1f1f1;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 18px;
+        }
+
+        .metric h3 {
+            margin: 0;
+            font-size: 22px;
+            font-weight: bold;
+        }
+
+        .metric p {
+            font-size: 18px;
+            margin-top: 10px;
+            color: #777;
+        }
+
+        .message {
+            text-align: center;
+            padding: 10px;
+            margin-bottom: 20px;
+            font-size: 18px;
+            background-color: #2196F3;
+            color: white;
+            border-radius: 5px;
+            display: none;
+        }
+
+        canvas {
+            margin-top: 40px;
+        }
+
+        .footer {
+            text-align: center;
+            font-size: 14px;
+            color: #888;
+            margin-top: 40px;
+        }
+    </style>
+</head>
+<body>
+
+<header>Probo Price Model</header>
+
+<div class="container">
+
+    <!-- Real-time update message -->
+    <div id="update-message" class="message">
+        Real-time prices updated successfully!
+    </div>
+
+    <h1>Add an Order</h1>
+
+    <form id="order-form">
+        <div class="form-group">
+            <label for="price">Price</label>
+            <input type="number" id="price" name="price" required>
+        </div>
+        <div class="form-group">
+            <label for="quantity">Quantity</label>
+            <input type="number" id="quantity" name="quantity" required>
+        </div>
+        <div class="form-group">
+            <label for="side">Side</label>
+            <select id="side" name="side" required>
+                <option value="buy">Buy</option>
+                <option value="sell">Sell</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="option">Option</label>
+            <select id="option" name="option" required>
+                <option value="YES">YES</option>
+                <option value="NO">NO</option>
+            </select>
+        </div>
+        <button type="submit">Add Order</button>
+    </form>
+
+    <div class="metrics">
+        <div class="metric" id="best_bid">
+            <h3>Best Bid</h3>
+            <p>N/A</p>
+        </div>
+        <div class="metric" id="best_ask">
+            <h3>Best Ask</h3>
+            <p>N/A</p>
+        </div>
+        <div class="metric" id="mid_price">
+            <h3>Mid Price</h3>
+            <p>N/A</p>
+        </div>
+        <div class="metric" id="weighted_avg_price">
+            <h3>Weighted Avg Price</h3>
+            <p>N/A</p>
+        </div>
+    </div>
+    <div class="graph-section">
+    <canvas id="priceChart" width="800" height="300"></canvas>
+    </div>
+
+    <div class="footer">&copy; Made by Radhika Piplani </div>
+</div>
+
+<script>
+    const orderForm = document.getElementById("order-form");
+    const updateMessage = document.getElementById("update-message");
+
+    orderForm.onsubmit = async (e) => {
+        e.preventDefault();
+        const formData = new FormData(orderForm);
+        const orderData = {
+            price: parseFloat(formData.get("price")),
+            quantity: parseInt(formData.get("quantity")),
+            side: formData.get("side"),
+            option: formData.get("option")
+        };
+
+        await fetch("/orders/", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(orderData)
+        });
+
+        fetchAndDisplayPrices();
+
+        updateMessage.style.display = 'block';
+        setTimeout(() => updateMessage.style.display = 'none', 3000);
+    };
+
+    async function fetchAndDisplayPrices() {
+        try {
+            const response = await fetch("/prices/");
+            const priceData = await response.json();
+
+            // Update text UI
+            document.getElementById("best_bid").querySelector("p").textContent = priceData.best_bid || "No buy orders";
+            document.getElementById("best_ask").querySelector("p").textContent = priceData.best_ask || "No sell orders";
+            document.getElementById("mid_price").querySelector("p").textContent = priceData.mid_price || "Cannot calculate mid price";
+            document.getElementById("weighted_avg_price").querySelector("p").textContent = priceData.weighted_avg_price || "No orders found";
+
+            const now = new Date();
+            const label = now.toLocaleTimeString();
+
+            midPriceLabels.push(label);
+            if (midPriceLabels.length > 10) midPriceLabels.shift();
+
+            midPriceData.push(isNaN(priceData.mid_price) ? null : priceData.mid_price);
+            bestBidData.push(isNaN(priceData.best_bid) ? null : priceData.best_bid);
+            bestAskData.push(isNaN(priceData.best_ask) ? null : priceData.best_ask);
+            weightedAvgData.push(isNaN(priceData.weighted_avg_price) ? null : priceData.weighted_avg_price);
+
+            [midPriceData, bestBidData, bestAskData, weightedAvgData].forEach(arr => {
+                if (arr.length > 10) arr.shift();
+            });
+
+            midPriceChart.update();
+        } catch (error) {
+            console.error("Error fetching prices:", error);
+        }
+    }
+
+    // Chart.js graph setup
+    const ctx = document.getElementById('priceChart').getContext('2d');
+    const midPriceLabels = [];
+    const midPriceData = [];
+    const bestBidData = [];
+    const bestAskData = [];
+    const weightedAvgData = [];
+
+    const midPriceChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: midPriceLabels,
+            datasets: [
+                {
+                    label: 'Best Bid',
+                    data: bestBidData,
+                    borderColor: '#2196F3',
+                    fill: false,
+                    tension: 0.3
+                },
+                {
+                    label: 'Best Ask',
+                    data: bestAskData,
+                    borderColor: '#FF9800',
+                    fill: false,
+                    tension: 0.3
+                },
+                {
+                    label: 'Mid Price',
+                    data: midPriceData,
+                    borderColor: '#2196F3',
+                    fill: false,
+                    tension: 0.3
+                },
+                {
+                    label: 'Weighted Avg Price',
+                    data: weightedAvgData,
+                    borderColor: '#9C27B0',
+                    fill: false,
+                    tension: 0.3
+                }
+            ]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: false
+                }
+            }
+        }
+    });
+
+    fetchAndDisplayPrices();
+    setInterval(fetchAndDisplayPrices, 5000); // Real-time update
+</script>
+
+</body>
+</html>'
