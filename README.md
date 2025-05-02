@@ -1,4 +1,4 @@
-# Probo Market Price Simulation
+# Probo Market Price Calculation
 
 This project simulates market pricing logic for a binary opinion market (YES/NO) like Probo. It maintains a live order book and computes metrics like Best Bid, Best Ask, Mid Price, and Weighted Average Price.
 
@@ -10,7 +10,6 @@ This project simulates market pricing logic for a binary opinion market (YES/NO)
 
    ```bash
    git clone https://github.com/radhika2208/ProboApp.git
-   cd probo-market-simulation
    ```
 
 2. **(Optional) Create a Virtual Environment:**
