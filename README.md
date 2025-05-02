@@ -9,7 +9,7 @@ This project simulates market pricing logic for a binary opinion market (YES/NO)
 1. **Clone the Repository:**
 
    ```bash
-   git clone https://github.com/yourusername/probo-market-simulation.git
+   git clone https://github.com/radhika2208/ProboApp.git
    cd probo-market-simulation
    ```
 
