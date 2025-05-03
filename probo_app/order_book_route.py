@@ -31,6 +31,9 @@ async def get_all_prices():
     best_ask = order_book.get_best_ask()
     mid_price = order_book.get_mid_price()
     weighted_avg_price = order_book.get_weighted_avg_price()
+    spread = order_book.get_spread()
+    yes_price = order_book.get_yes_price()
+    no_price = order_book.get_no_price()
 
     response = {
         "best_bid": best_bid if best_bid is not None else "No buy orders",
@@ -41,5 +44,8 @@ async def get_all_prices():
         "weighted_avg_price": (
             weighted_avg_price if weighted_avg_price is not None else "No orders found"
         ),
+        "spread" : spread,
+        "yes_price" : yes_price,
+        "no_price" : no_price
     }
     return response

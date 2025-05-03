@@ -127,7 +127,6 @@
 
 <div class="container">
 
-    <!-- Real-time update message -->
     <div id="update-message" class="message">
         Real-time prices updated successfully!
     </div>
@@ -177,17 +176,32 @@
             <h3>Weighted Avg Price</h3>
             <p>N/A</p>
         </div>
-    </div>
-    <div class="graph-section">
-    <canvas id="priceChart" width="800" height="300"></canvas>
+        <div class="metric" id="spread">
+            <h3>Spread</h3>
+            <p>N/A</p>
+        </div>
+        <div class="metric" id="yes_price">
+            <h3>YES Price</h3>
+            <p>N/A</p>
+        </div>
+        <div class="metric" id="no_price">
+            <h3>NO Price</h3>
+            <p>N/A</p>
+        </div>
     </div>
 
-    <div class="footer">&copy; Made by Radhika Piplani </div>
+    <div class="graph-section">
+        <canvas id="priceChart" width="800" height="300"></canvas>
+    </div>
+
+    <div class="footer">&copy; Made by Radhika Piplani</div>
 </div>
 
 <script>
     const orderForm = document.getElementById("order-form");
     const updateMessage = document.getElementById("update-message");
+
+    let priceChart; // Global chart instance
 
     orderForm.onsubmit = async (e) => {
         e.preventDefault();
@@ -216,88 +230,57 @@
             const response = await fetch("/prices/");
             const priceData = await response.json();
 
-            // Update text UI
             document.getElementById("best_bid").querySelector("p").textContent = priceData.best_bid || "No buy orders";
             document.getElementById("best_ask").querySelector("p").textContent = priceData.best_ask || "No sell orders";
             document.getElementById("mid_price").querySelector("p").textContent = priceData.mid_price || "Cannot calculate mid price";
             document.getElementById("weighted_avg_price").querySelector("p").textContent = priceData.weighted_avg_price || "No orders found";
+            document.getElementById("spread").querySelector("p").textContent = priceData.spread || "No spread";
+            document.getElementById("yes_price").querySelector("p").textContent = priceData.yes_price || "No YES price";
+            document.getElementById("no_price").querySelector("p").textContent = priceData.no_price || "No NO price";
 
-            const now = new Date();
-            const label = now.toLocaleTimeString();
+            const chartData = {
+                labels: ["Best Bid", "Best Ask", "Mid Price", "Weighted Avg Price", "YES Price", "NO Price"],
+                datasets: [{
+                    label: 'Prices',
+                    data: [
+                        priceData.best_bid || 0,
+                        priceData.best_ask || 0,
+                        priceData.mid_price || 0,
+                        priceData.weighted_avg_price || 0,
+                        priceData.yes_price || 0,
+                        priceData.no_price || 0
+                    ],
+                    backgroundColor: "rgba(33, 150, 243, 0.5)"
+                }]
+            };
 
-            midPriceLabels.push(label);
-            if (midPriceLabels.length > 10) midPriceLabels.shift();
+            const ctx = document.getElementById("priceChart").getContext("2d");
 
-            midPriceData.push(isNaN(priceData.mid_price) ? null : priceData.mid_price);
-            bestBidData.push(isNaN(priceData.best_bid) ? null : priceData.best_bid);
-            bestAskData.push(isNaN(priceData.best_ask) ? null : priceData.best_ask);
-            weightedAvgData.push(isNaN(priceData.weighted_avg_price) ? null : priceData.weighted_avg_price);
+            if (priceChart) {
+                priceChart.data = chartData;
+                priceChart.update();
+            } else {
+                priceChart = new Chart(ctx, {
+                    type: "bar",
+                    data: chartData,
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            }
 
-            [midPriceData, bestBidData, bestAskData, weightedAvgData].forEach(arr => {
-                if (arr.length > 10) arr.shift();
-            });
-
-            midPriceChart.update();
         } catch (error) {
             console.error("Error fetching prices:", error);
         }
     }
 
-    // Chart.js graph setup
-    const ctx = document.getElementById('priceChart').getContext('2d');
-    const midPriceLabels = [];
-    const midPriceData = [];
-    const bestBidData = [];
-    const bestAskData = [];
-    const weightedAvgData = [];
-
-    const midPriceChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: midPriceLabels,
-            datasets: [
-                {
-                    label: 'Best Bid',
-                    data: bestBidData,
-                    borderColor: '#2196F3',
-                    fill: false,
-                    tension: 0.3
-                },
-                {
-                    label: 'Best Ask',
-                    data: bestAskData,
-                    borderColor: '#FF9800',
-                    fill: false,
-                    tension: 0.3
-                },
-                {
-                    label: 'Mid Price',
-                    data: midPriceData,
-                    borderColor: '#2196F3',
-                    fill: false,
-                    tension: 0.3
-                },
-                {
-                    label: 'Weighted Avg Price',
-                    data: weightedAvgData,
-                    borderColor: '#9C27B0',
-                    fill: false,
-                    tension: 0.3
-                }
-            ]
-        },
-        options: {
-            scales: {
-                y: {
-                    beginAtZero: false
-                }
-            }
-        }
-    });
-
-    fetchAndDisplayPrices();
-    setInterval(fetchAndDisplayPrices, 5000); // Real-time update
+    window.onload = fetchAndDisplayPrices;
 </script>
 
 </body>
-</html>'
+</html>
