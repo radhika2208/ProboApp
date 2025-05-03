@@ -1,6 +1,6 @@
 # Probo Market Price Calculation
 
-This project simulates market pricing logic for a binary opinion market (YES/NO) like Probo. It maintains a live order book and computes metrics like Best Bid, Best Ask, Mid Price, and Weighted Average Price.
+This project simulates market pricing logic for a binary opinion market (YES/NO) like Probo. It maintains a live order book and computes metrics like Best Bid, Best Ask, Mid Price, Spread, Yes Price, No Price and Weighted Average Price.
 
 ---
 
@@ -28,7 +28,9 @@ This project simulates market pricing logic for a binary opinion market (YES/NO)
 4. **Run the FastAPI Server (if backend):**
 
    ```bash
-   uvicorn main:app --reload
+   uvicorn main:app --reload 
+   or 
+   python application.py
    ```
 
 5. **Open the HTML UI:**
@@ -61,9 +63,12 @@ On hitting GET `/prices/`, the response looks like:
 ```json
 {
   "best_bid": 10000,
-  "best_ask": null,
-  "mid_price": null,
-  "weighted_avg_price": 10000.0
+  "best_ask": 2000,
+  "mid_price": 100,
+  "weighted_avg_price": 10000.0,
+   "spread" : "200",
+   "yes_price" : 7.4,
+   "no_price" : 2.6
 }
 ```
 
@@ -77,6 +82,9 @@ On hitting GET `/prices/`, the response looks like:
 - **Best Bid**: The Best Bid is the highest price at which there is an outstanding buy order. This is the maximum price from all active buy orders in the order book.
 - **Best Ask**: The Best Ask is the lowest price at which there is an outstanding sell order. This is the minimum price from all active sell orders in the order book.
 - **Mid price** is calculated as the average of Best Bid and Best Ask.
+- **spread** is calculated as difference of Best Bid and Best Ask.
+- **Yes Price** is calculated as total of yes quantity of an order on scale of 10.
+- **No Price** is calculated as total of no quantity of an order on scale of 10.
 - **Weighted Average Price**: The Weighted Average Price is calculated from all matched buy and sell orders, considering the volume of each order.
 ---
 
@@ -111,20 +119,16 @@ Probo_project/
 
 ## Example
 
-### 1. Submit Order:
+### 1. APIS:
 ```bash
 POST /orders/
-{
-  "price": 10000,
-  "quantity": 5,
-  "side": "buy",
-  "option": "YES"
-}
+GET /prices/
+on port http://0.0.0.0:8000/docs
 ```
 
-### 2. Get Price Metrics:
+### 2. Frontend Form and real time Matrix:
 ```bash
-GET /prices/
+on port http://0.0.0.0:8000
 ```
 
 ---
